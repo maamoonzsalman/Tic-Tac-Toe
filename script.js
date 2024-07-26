@@ -57,41 +57,50 @@ function gameController() {
     
     let getActivePlayer = () => {
         if (playerOne.activeStatus === true) {
-            console.log('Player one is active')
             return playerOne
         } else if (playerTwo.activeStatus === true) {
-            console.log('Player two is active')
             return playerTwo
         }
     }
 
     function switchPlayerTurn() {
-        console.log('this is running')
         if (playerOne.activeStatus === true) {
             playerOne.activeStatus = false
             playerTwo.activeStatus = true
-            console.log('Switching to player 2')
         } else if (playerTwo.activeStatus === true) {
             playerTwo.activeStatus = false
             playerOne.activeStatus = true
-            console.log('Switching to player 1')
         }
     }
     
     function askMove(user) {
-        // add functionality to check for availability of position 
-        
         return new Promise((resolve) => {
-          let pos = [];
-          rl.question(`${user.name} enter your move (row and column) separated by a space: `, (move) => {
-            const [row, col] = move.split(' ').map(Number);
-            pos.push(row);
-            pos.push(col);
-            resolve(pos);
-          });
+            const ask = () => {
+                rl.question(`${user.name} enter your move (row and column) separated by a space: `, (move) => {
+                    const parts = move.split(' ');
+                    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                        const [row, col] = parts.map(Number);
+                        if (row >= 0 && row <= 2 && col >= 0 && col <= 2) {
+                            if (ourBoard[row][col] === '') {
+                                resolve([row, col]);
+                            } else {
+                                console.log('This position is taken. Please choose another one.');
+                                ask(); // Re-ask the user for a valid move
+                            }
+                        } else {
+                            console.log('Invalid input. Row and column must be between 0 and 2.');
+                            ask(); // Re-ask the user for a valid input
+                        }
+                    } else {
+                        console.log('Invalid input. Please enter two integers separated by a space.');
+                        ask(); // Re-ask the user for a valid input
+                    }
+                });
+            };
+            ask();
         });
-      }
-
+    }
+    
     // TODO: Parameter name 
     function checkForWinner(gameBoard) {
         const winningCombinations = [
@@ -117,16 +126,11 @@ function gameController() {
         return null;
     }
     
-      
-    
     async function playGame() {
         while (gameStatus) {
           let currentPlayer = getActivePlayer();
           let playerMove = await askMove(currentPlayer);
           
-          // Use the playerMove array here
-          console.log('This is playerMove', playerMove);
-
           // Update game board array with player move 
           ourBoard = gameBoard().updateBoard(ourBoard, playerMove[0],playerMove[1], currentPlayer.mark)
           console.log(ourBoard)
@@ -147,10 +151,11 @@ function gameController() {
           }
           
           if (gameStatus) {
-            switchPlayerTurn()
+            switchPlayerTurn();
           }
-
         }
+
+        rl.close();
       }
 
      playGame()

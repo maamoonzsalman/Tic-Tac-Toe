@@ -1,9 +1,17 @@
+// TODO: make one playgame function compatible with both HTML and Terminal
+// TODO: Improve overall design 
+// TODO: Comment out code 
+
+/*
+
 const readline = require('readline');
 
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
+
+*/
 
 /* TODO: Change variable name for active status */
 function Player(name, mark, activeStatus) {
@@ -22,16 +30,12 @@ function gameBoard () {
     }
 
     /* TODO: Change argument name gameBoard to differ from function name */
-    function updateBoard(gameBoard, row, col, shape) {
-        if (gameBoard[row][col] === '') {
-            gameBoard[row][col] = shape
-        } else {
-            console.log('This position is taken')
-        }
+    function updateBoardArray(gameBoard, row, col, shape) {
+        gameBoard[row][col] = shape
         return gameBoard
     }
 
-    return {ticTacToeBoard, updateBoard}
+    return {ticTacToeBoard, updateBoardArray}
 }
 
 function setPlayers() {
@@ -100,6 +104,25 @@ function gameController() {
             ask();
         });
     }
+
+    function waitForUserClick() {
+        return new Promise(resolve => {
+            const cells = document.querySelectorAll('.cell');
+            const handleClick = (event) => {
+                const cell = event.target;
+                if (cell.textContent === '') {
+                    cells.forEach(c => c.removeEventListener('click', handleClick)); // Remove all click listeners
+                    resolve(cell);
+                } else {
+                    alert('Cell already taken, please choose another one.');
+                }
+            };
+            cells.forEach(cell => {
+                cell.addEventListener('click', handleClick);
+            });
+        });
+    }
+    
     
     // TODO: Parameter name 
     function checkForWinner(gameBoard) {
@@ -126,13 +149,13 @@ function gameController() {
         return null;
     }
     
-    async function playGame() {
+    async function playGameTerminal() {
         while (gameStatus) {
           let currentPlayer = getActivePlayer();
           let playerMove = await askMove(currentPlayer);
           
           // Update game board array with player move 
-          ourBoard = gameBoard().updateBoard(ourBoard, playerMove[0],playerMove[1], currentPlayer.mark)
+          ourBoard = gameBoard().updateBoardArray(ourBoard, playerMove[0],playerMove[1], currentPlayer.mark)
           console.log(ourBoard)
           moves++;
 
@@ -158,17 +181,87 @@ function gameController() {
         rl.close();
       }
 
-     playGame()
+    async function playGameHTML() {
+        while (gameStatus) {
+            // Set current player
+            let currentPlayer = getActivePlayer();
+            
+            // Set display to show who's turn it is
+            displayController().displayTurn(`${currentPlayer.name}'s turn!`)
+            
+            // Current player's turn to choose a cell
+            let clickedCell = await waitForUserClick();
+            
+            // Retrieve data of cell chosen by the user
+            let data = clickedCell.getAttribute('data-index')
+            
+            // Display user's mark on the cell 
+            displayController().updateCellDisplay(clickedCell, currentPlayer.mark)
+            
+            // Update board array
+            ourBoard = gameBoard().updateBoardArray(ourBoard, data[0], data[2], currentPlayer.mark)
+            console.log(ourBoard)
+            
+            // increase moves count 
+            moves++; 
 
-     return {askMove}
-}
+            // Check if there is a winner
+            let winningSymbol = checkForWinner(ourBoard)
 
-function displayController () {
-    
-    function loadBoard (gameBoard) {
-        
+            if (winningSymbol === playerOne.mark || winningSymbol === playerTwo.mark) {
+                displayController().displayTurn(`${currentPlayer.name} wins!`)
+                gameStatus = false
+              } else if (winningSymbol === null && moves == 9) {
+                displayController().displayTurn(`It's a tie!`)
+                gameStatus = false
+              }
+            
+            // If the game is not over, we switch turns for next play
+            if (gameStatus) {
+                switchPlayerTurn();
+            }            
+        }
     }
+
+    playGameHTML()
 }
 
-gameController()
+function displayController() {
+    
+    function loadBoard() {
+        let cellArray = [
+            ['','',''], 
+            ['','',''],
+            ['','','']
+        ]
 
+        const cellContainer = document.getElementById('game-display')
+
+        cellArray.map((row, rowIndex) => {
+            row.map((cellContent, colIndex) => {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.textContent = cellContent;
+                cell.setAttribute('data-index', `${rowIndex}-${colIndex}`)
+                cellContainer.appendChild(cell)
+            })
+        })
+    }
+
+    function displayTurn(phrase) {
+        const displayBoard = document.getElementById('display-board')
+        displayBoard.textContent = phrase
+
+    }
+
+    function updateCellDisplay(cell, content) {
+        cell.textContent = content
+    }
+
+    return {loadBoard, displayTurn, updateCellDisplay}
+}
+
+// gameController()
+
+displayController().loadBoard()
+gameController()

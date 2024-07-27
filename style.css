@@ -1,3 +1,48 @@
+html {
+    width: 100vw;
+    height: 100vh;
+    background-color: #333;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#display-board {
+    font-size: 40px;
+    margin-bottom: 3%;
+    font-family: 'Courier New', Courier, monospace;
+    color: white;
+}
+
+.game-display {
+    display: grid;
+    grid-template-columns: 185px 185px 185px;
+    grid-template-rows: 185px 185px 185px;
+    justify-content: center;
+    align-items: center;
+    border:solid;
+    border-color: black;
+    border-width: 20%;
+}
+
 .cell {
     background-color: red;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 75px;
+    font-weight: 501;
+    font-family:'Courier New', Courier, monospace;
+    border:solid;
+    border-color: black;
+    border-width: 20%;
+
 }
+
